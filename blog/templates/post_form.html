@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>
+    {% if form.instance.pk %}
+      Редактировать пост
+    {% else %}
+      Новый пост
+    {% endif %}
+  </h2>
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      {{ form.title.label_tag }}
+      <br>
+      {{ form.title }}
+      {% if form.title.errors %}
+        <div class="alert alert-danger">{{ form.title.errors }}</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      {{ form.content.label_tag }}
+      <br>
+      {{ form.content }}
+      {% if form.content.errors %}
+        <div class="alert alert-danger">{{ form.content.errors }}</div>
+      {% endif %}
+      </div>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <a href="{% url 'home' %}" class="btn btn-secondary">Отмена</a>
+  </form>
+{% endblock %}

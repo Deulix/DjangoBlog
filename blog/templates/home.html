@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% comment %} {% block title %}
+{% endblock %} {% endcomment %}
+{% block content %}
+  {% if posts %}
+    <h1>Последние посты</h1>
+    {% for post in posts %}
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">{{ post.title }}</h5>
+          <p class="card-text">{{ post.content|truncatechars:200 }}</p>
+          <a href="{% url 'post_detail' pk=post.pk %}" class="btn btn-primary">Читать больше</a>
+           <h5><span class="badge bg-success">Комментариев: {{post.comments.count}}</span></h5> 
+          
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <h1>Пока нет постов</h1>
+  {% endif %}
+{% endblock %}
