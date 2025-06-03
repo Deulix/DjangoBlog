@@ -92,7 +92,7 @@ def post_edit(request, pk):
 
 @login_required
 def post_delete(request, pk):
-    if request.method == "POST":
+    # if request.method == "POST":
         post = get_object_or_404(Post, pk=pk)
         if post.author != request.user:
             return redirect("home")
@@ -100,8 +100,8 @@ def post_delete(request, pk):
             post.delete()
             messages.success(request, "Пост успешно удалён!")
             return redirect("home")
-    else:
-        return redirect("home")
+    # else:
+    #     return redirect("home")
 
 @login_required
 def comment_delete(request, pk):
