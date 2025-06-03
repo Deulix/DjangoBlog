@@ -10,7 +10,7 @@ class Post(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def is_liked_by(self, user):
-        return self.post_likes.filter(user=user).exists()
+        return self.likes.filter(user=user).exists()
 
     def __str__(self):
         return self.title
@@ -23,16 +23,16 @@ class Comment(models.Model):
     parent_comment = models.ForeignKey('Comment', null=True, blank=True, on_delete=models.CASCADE)
 
     def is_liked_by(self, user):
-        return self.comment_likes.filter(user=user).exists()
+        return self.likes.filter(user=user).exists()
     
     def __str__(self):
-        return f"Comment by {self.author} on {self.post.title}"
+        return f"Комментарий пользователя {self.author} в {self.post.title}"
     
 class LikePost(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='post_likes')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='post_likes')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='liked_posts')
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
     class Meta:
         unique_together = ['post', 'user']
         verbose_name = 'Лайк поста'
@@ -42,8 +42,8 @@ class LikePost(models.Model):
         return f'Пользователь {self.user} поставил лайк на {self.post}'
 
 class LikeComment(models.Model):
-    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='comment_likes')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comment_likes')
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='liked_comment')
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

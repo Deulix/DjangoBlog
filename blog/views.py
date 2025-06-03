@@ -9,17 +9,32 @@ from django.contrib.auth.models import User
 
 def home(request):
     posts = Post.objects.all().order_by("-created_at")
-    return render(request, "home.html", {"posts": posts})
+
+    liked_posts_ids = []
+    if request.user.is_authenticated:
+        liked_posts_ids = list(
+            LikePost.objects.filter(user=request.user, post__in=posts).values_list(
+                "post_id", flat=True
+            )
+        )
+
+    return render(
+        request, "home.html", {"posts": posts, "liked_posts_ids": liked_posts_ids}
+    )
 
 
 def post_detail(request, pk):
     post = get_object_or_404(Post, pk=pk)
     comments = post.comments.filter(parent_comment__isnull=True)
-    is_liked_post = post.post_likes.filter(user=request.user).exists() if request.user.is_authenticated else False
+    is_liked_post = (
+        post.likes.filter(user=request.user).exists()
+        if request.user.is_authenticated
+        else False
+    )
 
     if request.user.is_authenticated:
         for comment in comments:
-            comment.is_liked_by_user = comment.comment_likes.filter(user=request.user).exists()
+            comment.is_liked_by_user = comment.likes.filter(user=request.user).exists()
 
     if request.method == "POST":
         form = CommentForm(request.POST)
@@ -33,7 +48,15 @@ def post_detail(request, pk):
         form = CommentForm()
 
     return render(
-        request, "post_detail.html", {"post": post, "comments": comments, "form": form, 'is_liked_post':is_liked_post})
+        request,
+        "post_detail.html",
+        {
+            "post": post,
+            "comments": comments,
+            "form": form,
+            "is_liked_post": is_liked_post,
+        },
+    )
 
 
 @login_required
@@ -44,7 +67,7 @@ def post_create(request):
             post = form.save(commit=False)
             post.author = request.user
             post.save()
-            messages.success(request, 'Пост успешно создан!')
+            messages.success(request, "Пост успешно создан!")
             return redirect("home")
     else:
         form = PostForm()
@@ -61,20 +84,36 @@ def post_edit(request, pk):
         form = PostForm(request.POST, instance=post)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Пост успешно отредактирован!')
+            messages.success(request, "Пост успешно отредактирован!")
             return redirect("post_detail", pk=post.pk)
     else:
         form = PostForm(instance=post)
     return render(request, "post_form.html", {"form": form})
 
-
+@login_required
 def post_delete(request, pk):
-    post = get_object_or_404(Post, pk=pk)
-    if post.author != request.user:
-        return redirect("home")
+    if request.method == "POST":
+        post = get_object_or_404(Post, pk=pk)
+        if post.author != request.user:
+            return redirect("home")
+        else:
+            post.delete()
+            messages.success(request, "Пост успешно удалён!")
+            return redirect("home")
     else:
-        post.delete()
-        messages.success(request, 'Пост успешно удалён!')
+        return redirect("home")
+
+@login_required
+def comment_delete(request, pk):
+    if request.method == "POST":
+        comment = get_object_or_404(Comment, pk=pk)
+        if comment.author != request.user:
+            return redirect("home")
+        else:
+            comment.delete()
+            messages.success(request, "Комментарий успешно удалён!")
+            return redirect("post_detail", pk=comment.post.pk)
+    else:
         return redirect("home")
 
 
@@ -88,27 +127,45 @@ def register(request):
         form = UserCreationForm()
     return render(request, "registration/register.html", {"form": form})
 
+
 @login_required
 def post_like(request, pk):
-    post = get_object_or_404(Post, pk=pk)
-    if post.post_likes.filter(user=request.user).exists():
-        post.post_likes.filter(user=request.user).delete()
-        # messages.info(request, 'Лайк удалён')
+    if request.method == "POST":
+        post = get_object_or_404(Post, pk=pk)
+        if post.likes.filter(user=request.user).exists():
+            post.likes.filter(user=request.user).delete()
+        else:
+            LikePost.objects.create(post=post, user=request.user)
+        return redirect("post_detail", pk=pk)
     else:
-        LikePost.objects.create(post=post, user=request.user)
-        # messages.success(request, 'Лайк поставлен')
-    return redirect('post_detail', pk=pk)
+        return redirect("home")
+
+
+@login_required
+def post_like_home(request, pk):
+    if request.method == "POST":
+        post = get_object_or_404(Post, pk=pk)
+        if post.likes.filter(user=request.user).exists():
+            post.likes.filter(user=request.user).delete()
+        else:
+            LikePost.objects.create(post=post, user=request.user)
+        return redirect("home")
+    else:
+        return redirect("home")
+
 
 @login_required
 def comment_like(request, pk):
-    comment = get_object_or_404(Comment, pk=pk)
-    if comment.comment_likes.filter(user=request.user).exists():
-        comment.comment_likes.filter(user=request.user).delete()
-        # messages.info(request, 'Лайк удалён')
+    if request.method == "POST":
+        comment = get_object_or_404(Comment, pk=pk)
+        if comment.likes.filter(user=request.user).exists():
+            comment.likes.filter(user=request.user).delete()
+        else:
+            LikeComment.objects.create(comment=comment, user=request.user)
+        return redirect("post_detail", pk=comment.post.pk)
     else:
-        LikeComment.objects.create(comment=comment, user=request.user)
-        # messages.success(request, 'Лайк поставлен')
-    return redirect('post_detail', pk=comment.post.pk)
+        return redirect("home")
+
 
 # @login_required
 # def profile(request, pk):

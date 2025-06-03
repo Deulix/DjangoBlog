@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
-{% comment %} {% block title %}
-{% endblock %} {% endcomment %}
+
 {% block content %}
   {% if posts %}
     <h1>Последние посты</h1>
@@ -9,10 +8,32 @@
         <div class="card-body">
           <h5 class="card-title">{{ post.title }}</h5>
           <p class="card-text">{{ post.content|truncatechars:200 }}</p>
-          <div class="d-flex"><a href="{% url 'post_detail' pk=post.pk %}" class="btn btn-primary">Читать больше</a>
-           <p class="ms-3">Комментариев: {{post.comments.count}}</p></div>
-           
-          
+          <div class="d-flex align-items-center">
+            <a href="{% url 'post_detail' pk=post.pk %}" class="btn btn-primary me-3">Читать больше</a>
+            <span class="badge bg-secondary me-3">
+              Комментариев: {{ post.comments.count }}
+            </span>
+            <div class="me-auto"></div>
+            <div class="likes">
+              {% if user.is_authenticated %}
+                <form action="{% url 'post_like_home' post.pk %}" method="post">
+                  {% csrf_token %}
+                  <button type="submit" style="border: 0cap; background: white;">
+                    {% if post.id in liked_posts_ids %}
+                      ❤️
+                    {% else %}
+                      🤍
+                    {% endif %}
+                    <span class="count">{{ post.likes.count }}</span>
+                  </button>
+                </form>
+              {% else %}
+                <span class="likes-count">
+                  ❤️ {{ post.likes.count }}
+                </span>
+              {% endif %}
+            </div>
+          </div>
         </div>
       </div>
     {% endfor %}
@@ -20,4 +41,3 @@
     <h1>Пока нет постов</h1>
   {% endif %}
 {% endblock %}
-{% else %}

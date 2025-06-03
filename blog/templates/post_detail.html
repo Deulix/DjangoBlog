@@ -4,7 +4,7 @@
   <div class="card mt-4 mb-2">
     <div class="card-body">
       <h1>{{ post.title }}</h1>
-      <small>Опубликовано пользователем {{ post.author.username }} в {{ post.created_at|date:'F j, Y' }}</small>
+      <small class="d-flex gap-1">Опубликовано пользователем: <span><h6>{{ post.author.username }}</h6></span> дата: {{ post.created_at|date:'j F, Y' }}</small>
       <hr />
       <p>{{ post.content }}</p>
       <div class="d-grid d-md-flex mt-2 justify-content-between">
@@ -18,7 +18,7 @@
               {% else %}
                 🤍
               {% endif %}
-              {{ post.post_likes.count }}
+              {{ post.likes.count }}
             </button>
           </form>
         </div>
@@ -57,7 +57,17 @@
   {% for comment in comments %}
     <div class="card mb-2">
       <div class="card-body">
-        <h5>{{ comment.author.username }}</h5>
+        <div class="d-flex">
+          <h5>{{ comment.author.username }}</h5>
+          {% if user == comment.author %}
+            <div class="me-auto"></div>
+            <form action="{% url 'comment_delete' comment.pk %}" method="post">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-close"></button>
+            </form>
+          {% endif %}
+        </div>
+
         <hr />
         <p>{{ comment.text }}</p>
         <div class="d-grid d-md-flex mt-2 justify-content-between">
@@ -70,7 +80,7 @@
               {% else %}
                 🤍
               {% endif %}
-              {{ comment.comment_likes.count }}
+              {{ comment.likes.count }}
             </button>
           </form>
         </div>
