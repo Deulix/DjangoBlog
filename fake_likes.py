@@ -23,12 +23,12 @@ def seed_like(count=3):
         comment_count = Comment.objects.count()
         if comment_count > 0:
             comment = choice(list(Comment.objects.all()))
-            
+
         like_post = LikePost.objects.filter(user=user, post=post)
         if like_post:
             like_post.delete()
         else:
-            LikePost.objects.create(user=user, post=post,)
+            LikePost.objects.create(user=user, post=post)
 
         like_comment = LikeComment.objects.filter(user=user, comment=comment)
         if like_comment:
